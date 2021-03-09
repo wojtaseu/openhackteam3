@@ -1,0 +1,30 @@
+# Example Build Pipeline for NuGet Publishing
+# Include versioning of packages and assemblies
+# Publish and promote to specific view
+# Use templates for repeatability
+
+
+trigger: none
+
+pool:
+  vmImage: 'windows-latest'
+
+# Set the name property which is the $(Build.BuildNumber)
+name: '$(majorVersion).$(minorVersion).$(DayOfYear)$(rev:.r)'
+
+variables:
+  buildConfiguration: 'Release'
+  buildPlatform: 'Any CPU'
+  project: ''
+  repoPath: '/FunctionAppOpenHack/*'
+  solution: '/FunctionAppOpenHack/FunctionAppOpenHack.sln'
+
+
+steps:
+- checkout: self
+
+#Actual build steps
+- template: ${{variables['System.DefaultWorkingDirectory']}}/Templates/template/azure-pipeline-build-vsbuild.yml
+  parameters: 
+    buildPlatform: $(buildPlatform)
+    buildConfiguration: $(buildConfiguration)

@@ -1,0 +1,87 @@
+parameters:
+
+- name: image
+  displayName: Pool Image
+  type: string
+  values:
+   - windows-latest
+  default: windows-latest
+
+- name: job_name
+  displayName: Job name
+  type: string
+
+- name: display_name
+  displayName: Display name
+  type: string
+
+- name: target_environment
+  displayName: target environment
+  type: string
+  values:
+   - Development
+  default: Development
+   
+- name: project
+  displayName: project name
+  type: string
+
+- name: pipeline
+  displayName: pipeline
+  type: string
+
+- name: artifact_name
+  displayName: artifact
+  type: string
+
+- name: azureSubscription
+  displayName: azureSubscription
+  type: string
+
+- name: appType
+  displayName: appType
+  type: string
+
+- name: webAppName
+  displayName: WebAppName
+  type: string
+  
+- name: packageForLinux
+  displayName: packageForLinux
+  type: string
+
+- name: buildVersion
+  displayName: version used during release
+  type: string
+
+- name: buildId
+  displayName: build version id used during release
+  type: string
+
+jobs:
+  - deployment: ${{ parameters.job_name }}
+    displayName: ${{ parameters.display_name }}
+    pool: 
+      vmImage: ${{ parameters.image }}
+    environment: ${{ parameters.target_environment }}
+    strategy:
+        runOnce:
+          deploy:
+            steps:
+              - template: ${{variables['System.DefaultWorkingDirectory']}}/Templates/template/azure-pipeline-download-artifacts.yml
+                parameters:
+                  buildType: 'specific'
+                  project: ${{ parameters.project }}
+                  pipeline: ${{ parameters.pipeline }}
+                  buildVersionToDownload: ${{ parameters.buildVersion }}
+                  buildId: ${{ parameters.buildId }}
+                  downloadType: 'single'
+                  artifactName: '${{ parameters.artifact_name }}'
+                  downloadPath: '$(System.ArtifactsDirectory)'
+              - template: ${{variables['System.DefaultWorkingDirectory']}}/Templates/template/azure-pipeline-deploy-serviceapp.yml
+                parameters:
+                  azureSubscription: ${{ parameters.azureSubscription }}
+                  appType: ${{ parameters.appType }}
+                  WebAppName: ${{ parameters.webAppName }}
+                  enableXmlVariableSubstitution: true
+                  packageForLinux: $(System.ArtifactsDirectory)${{parameters.packageForLinux}}

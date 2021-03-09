@@ -1,0 +1,40 @@
+trigger: none
+
+parameters:
+- name: buildVersion
+  displayName: version used during release
+  type: string
+  default: 'latest'
+  values:
+    - latest
+    - specific
+    
+- name: buildId
+  displayName: buildID used for rollback (not required with latest)
+  type: number
+  default: 000000
+
+variables:
+  - name: node_version
+    value: '10.x'
+  - name: package_manager
+    value: 'npm'
+
+stages:
+- stage: ReleaseFunctionAppOpenHack
+  dependsOn: []
+  jobs:
+  - template: ${{variables['System.DefaultWorkingDirectory']}}/Templates/jobs/azure-pipeline-publish-jobappservice.yml
+    parameters:
+      job_name: azurepipelineFunctionAppOpenHack
+      display_name: azure-pipeline-deploy-FunctionAppOpenHack
+      target_environment: Development
+      project: 
+      pipeline: 
+      artifact_name: drop
+      azureSubscription: 
+      appType: functionApp
+      WebAppName: 
+      packageForLinux: /drop/
+      buildVersion: ${{ parameters.buildVersion }}
+      buildId: ${{ parameters.buildId }}
