@@ -1,0 +1,31 @@
+parameters:
+- name: azureSubscription
+  type: string
+- name: appType
+  type: string
+- name: WebAppName
+  type: string
+- name: enableXmlVariableSubstitution
+  type: string
+- name: packageForLinux
+  type: string
+
+steps:
+- task: Bash@3
+  displayName: 'Passed parameters to Azure deploy artefact'
+  inputs:
+    targetType: 'inline'
+    script: |
+        echo azureSubscription: ${{ parameters.azureSubscription }}
+        echo appType: ${{ parameters.appType }}
+        echo WebAppName: ${{ parameters.WebAppName }}
+        echo enableXmlVariableSubstitution: ${{ parameters.enableXmlVariableSubstitution }}
+        echo packageForLinux: ${{ parameters.packageForLinux }}
+
+- task: AzureRmWebAppDeployment@4
+  inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      appType: ${{ parameters.appType }}
+      WebAppName: ${{ parameters.WebAppName }}
+      enableXmlVariableSubstitution: ${{ parameters.enableXmlVariableSubstitution }}
+      packageForLinux: ${{ parameters.packageForLinux }}

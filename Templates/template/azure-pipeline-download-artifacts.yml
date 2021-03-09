@@ -1,0 +1,46 @@
+parameters:
+- name: buildType
+  type: string
+- name: project
+  type: string
+- name: pipeline
+  type: string
+- name: buildVersionToDownload
+  type: string
+- name: downloadType
+  type: string
+- name: downloadPath
+  type: string
+- name: artifactName
+  type: string
+- name: buildId
+  type: string
+
+steps:
+- task: Bash@3
+  displayName: 'Passed parameters to the artefact download task'
+  inputs:
+    targetType: 'inline'
+    script: |
+        echo buildType: ${{ parameters.buildType }}
+        echo project: ${{ parameters.project }}
+        echo pipeline: ${{ parameters.pipeline }}
+        echo buildVersionToDownload: ${{ parameters.buildVersionToDownload }}
+        echo buildId: ${{ parameters.buildId }}
+        echo downloadType: ${{ parameters.downloadType }}
+        echo allowPartiallySucceededBuilds: true
+        echo downloadPath: ${{ parameters.downloadPath }}
+        echo artifactName: ${{ parameters.artifactname }}
+
+- task: DownloadBuildArtifacts@0
+  inputs:
+      buildType: ${{ parameters.buildType }}
+      project: ${{ parameters.project }}
+      pipeline: ${{ parameters.pipeline }}
+      buildVersionToDownload: ${{ parameters.buildVersionToDownload }}
+      ${{ if eq( parameters.buildVersionToDownload , 'specific') }}:
+        buildId: ${{ parameters.buildId }}
+      downloadType: ${{ parameters.downloadType }}
+      allowPartiallySucceededBuilds: true
+      downloadPath: ${{ parameters.downloadPath }}
+      artifactName: ${{ parameters.artifactname }}
