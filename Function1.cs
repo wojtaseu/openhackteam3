@@ -40,7 +40,7 @@ namespace FunctionAppOH
 
         [FunctionName("Function1")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get","post", Route = null)] HttpRequest req,
             ILogger log)
         {
             try {
@@ -76,7 +76,7 @@ namespace FunctionAppOH
                 string userId = "";
                 string location = "";
                 string uNotes = "";
-                int? rating = null;
+                int rating = -1;
                 string errorText = "";
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -84,7 +84,11 @@ namespace FunctionAppOH
                 
                 productId = data?.productId;
                 userId = data?.userId;
-                rating = data?.rating;
+
+                string tmpRating = data?.rating;
+
+                bool isRatingValid = int.TryParse(tmpRating, out rating);
+
                 location = data?.locationName;
                 uNotes = data?.userNotes;
 
@@ -119,7 +123,7 @@ namespace FunctionAppOH
                     log.LogInformation("user error: " + ex.ToString());
                 }
 
-                if(0 > rating || 5 < rating)
+                if(!isRatingValid || 0 > rating || 5 < rating)
                 {
                     errorText += "3";
                     log.LogInformation("invalid rating");
@@ -138,7 +142,7 @@ namespace FunctionAppOH
                             productId = productId,
                             timestamp = DateTime.UtcNow,
                             locationName = location,
-                            rating = rating.Value,
+                            rating = rating,
                             userNotes = uNotes
                         };
                         ItemResponse<ratingModel> wakefieldFamilyResponse = await container.CreateItemAsync<ratingModel>(
@@ -151,12 +155,14 @@ namespace FunctionAppOH
                     }
                 }
 
-
-                return new OkObjectResult(tmpResponse);
+                if(errorText.Length == 0)
+                    return new OkObjectResult(tmpResponse);
+                else
+                    return new NotFoundResult();
             }
             catch (Exception ex)
             {
-                return new OkObjectResult("nada");
+                return new NotFoundResult();
             }
         }
     }
