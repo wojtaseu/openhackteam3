@@ -36,7 +36,7 @@ namespace FunctionAppOH
 
         // The name of the database and container we will create
         private static string databaseId = "taskDatabase";
-        private static string containerId = "container1";
+        private static string containerId = "Container1";
 
         [FunctionName("Function1")]
         public static async Task<IActionResult> Run(
@@ -49,28 +49,33 @@ namespace FunctionAppOH
                     ConnectionMode = ConnectionMode.Gateway
                 });
 
-                var sqlQueryText = "SELECT * FROM c ";
+                //var sqlQueryText = "SELECT * FROM c ";
 
 
-                QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
-                FeedIterator<test> queryResultSetIterator = cosmosClient.GetContainer(databaseId,containerId).GetItemQueryIterator<test>(queryDefinition);
+                //QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
 
-                List<test> families = new List<test>();
+                //container = cosmosClient.GetContainer(databaseId, containerId);
 
-                while (queryResultSetIterator.HasMoreResults)
-                {
-                    FeedResponse<test> currentResultSet = await queryResultSetIterator.ReadNextAsync();
-                    foreach (test family in currentResultSet)
-                    {
-                        families.Add(family);
-                    }
-                }
+                //FeedIterator<test> queryResultSetIterator = cosmosClient.GetContainer(databaseId, containerId).GetItemQueryIterator<test>(queryDefinition);
+
+                //List<test> families = new List<test>();
+
+                //while (queryResultSetIterator.HasMoreResults)
+                //{
+                //    FeedResponse<test> currentResultSet = await queryResultSetIterator.ReadNextAsync();
+                //    foreach (test family in currentResultSet)
+                //    {
+                //        families.Add(family);
+                //    }
+                //}
 
 
                 log.LogInformation("C# HTTP trigger function processed a request.");
 
                 string productId = "";
                 string userId = "";
+                string location = "";
+                string uNotes = "";
                 int? rating = null;
                 string errorText = "";
 
@@ -80,6 +85,8 @@ namespace FunctionAppOH
                 productId = data?.productId;
                 userId = data?.userId;
                 rating = data?.rating;
+                location = data?.locationName;
+                uNotes = data?.userNotes;
 
 
                 try
@@ -112,24 +119,40 @@ namespace FunctionAppOH
                     log.LogInformation("user error: " + ex.ToString());
                 }
 
-                if(0 < rating || 5 > rating)
+                if(0 > rating || 5 < rating)
                 {
                     errorText += "3";
                     log.LogInformation("invalid rating");
                 }
 
-                if(errorText.Length == 0)
+                object tmpResponse  = errorText;
+
+                if (errorText.Length == 0)
                 {
-                    string guid = Guid.NewGuid().ToString();
-                    DateTime dt = DateTime.UtcNow;
+                    try
+                    {
+                        tmpResponse = new ratingModel
+                        {
+                            id = Guid.NewGuid().ToString(),
+                            userId = userId,
+                            productId = productId,
+                            timestamp = DateTime.UtcNow,
+                            locationName = location,
+                            rating = rating.Value,
+                            userNotes = uNotes
+                        };
+                        ItemResponse<ratingModel> wakefieldFamilyResponse = await container.CreateItemAsync<ratingModel>(
+                            (ratingModel)tmpResponse
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
                 }
 
 
-                string responseMessage = string.IsNullOrEmpty(productId)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : req.Method.Equals("GET") ? $"The product name for your product id {productId} is Starfruit Explosion" : $"The product name for your product id {productId} is Starfruit Explosion and the description is This starfruit ice cream is out of this world!";
-
-                return new OkObjectResult(responseMessage);
+                return new OkObjectResult(tmpResponse);
             }
             catch (Exception ex)
             {
@@ -167,5 +190,25 @@ namespace FunctionAppOH
         public string duedate { get; set; }
         public string task { get; set; }
         public string id { get; set; }
+    }
+
+//    {
+//  "id": "79c2779e-dd2e-43e8-803d-ecbebed8972c",
+//  "userId": "cc20a6fb-a91f-4192-874d-132493685376",
+//  "productId": "4c25613a-a3c2-4ef3-8e02-9c335eb23204",
+//  "timestamp": "2018-05-21 21:27:47Z",
+//  "locationName": "Sample ice cream shop",
+//  "rating": 5,
+//  "userNotes": "I love the subtle notes of orange in this ice cream!"
+//}
+    internal class ratingModel
+    {
+        public string id { get; set; }
+        public string userId { get; set; }
+        public string productId { get; set; }
+        public DateTime timestamp { get; set; }
+        public string locationName { get; set; }
+        public int rating { get; set; }
+        public string userNotes { get; set; }
     }
 }
