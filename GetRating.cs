@@ -7,29 +7,63 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Collections.Generic;
+using System;
+using System.Configuration;
+using System.Net;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents.Linq;
+using System.Linq;
+using Microsoft.Azure.Documents;
 
 namespace FunctionAppOH
 {
     public static class GetRating
     {
+
         [FunctionName("GetRating")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
-            ILogger log)
+        public static IActionResult Run(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "rating/{ratingId}")] HttpRequest req,
+        [CosmosDB(
+        databaseName: "taskDatabase",
+        collectionName: "Container1",
+        Id = "{ratingId}",
+        PartitionKey = "{ratingId}",
+        ConnectionStringSetting = "CosmosDBConnection")] Document document,
+        ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-
-            string name = req.Query["name"];
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
-
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
+            return document != null
+            ? (ActionResult)new OkObjectResult(document)
+            : new BadRequestObjectResult("Please revisit your route parameters");
         }
+
+
+
+        // return new OkResult();
+
+        // return new OkObjectResult();
+
+    
+
+
+
+        internal class ratingModel
+        {
+            public string id { get; set; }
+            public string userId { get; set; }
+            public string productId { get; set; }
+            public DateTime timestamp { get; set; }
+            public string locationName { get; set; }
+            public int rating { get; set; }
+            public string userNotes { get; set; }
+        }
+
     }
+
+
 }
+
