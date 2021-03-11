@@ -18,7 +18,7 @@ using Microsoft.Azure.Cosmos;
 
 namespace FunctionAppOH
 {
-    public static class Function1
+    public static class CreateRating
     {
         // The Azure Cosmos DB endpoint for running this sample.
         private static readonly string EndpointUri = "https://txtteam3-test-cosmo.documents.azure.com:443/";
@@ -38,7 +38,7 @@ namespace FunctionAppOH
         private static string databaseId = "taskDatabase";
         private static string containerId = "Container1";
 
-        [FunctionName("Function1")]
+        [FunctionName("CreateRating")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get","post", Route = null)] HttpRequest req,
             ILogger log)
